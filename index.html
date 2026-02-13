@@ -7,6 +7,7 @@
   <style>
     :root{
       --bg1:#ffdde1; --bg2:#ee9ca7; --card:#ffffffcc; --txt:#1f1f1f;
+      --shadow: 0 18px 50px rgba(0,0,0,.18);
     }
     *{box-sizing:border-box}
     body{
@@ -16,12 +17,12 @@
       overflow:hidden;
     }
     .card{
-      width:min(640px,92vw);
+      width:min(680px,92vw);
       background:var(--card);
       backdrop-filter: blur(8px);
       border-radius:26px;
-      padding:32px 22px 34px;
-      box-shadow: 0 18px 50px rgba(0,0,0,.18);
+      padding:34px 22px 34px;
+      box-shadow: var(--shadow);
       text-align:center;
       position:relative;
     }
@@ -40,10 +41,11 @@
     button{
       border:0; border-radius:999px;
       padding:12px 22px; font-size:16px; cursor:pointer;
-      transition: transform .08s ease;
+      transition: transform .08s ease, filter .2s ease;
       user-select:none;
       min-width:140px;
     }
+    button:hover{filter:brightness(1.02)}
     button:active{transform:scale(.98)}
     #yes{background:#16a34a; color:white}
     #no{
@@ -52,15 +54,52 @@
       left:0; top:0;
     }
 
+    /* Message popup */
     .msg{
       display:none;
-      margin-top:20px;
+      margin-top:22px;
       padding:18px 16px;
       background:white;
       border-radius:18px;
       border: 1px solid rgba(0,0,0,.10);
       font-size:16px;
       line-height:1.45;
+      box-shadow: 0 10px 30px rgba(0,0,0,.10);
+      transform-origin: center;
+    }
+
+    /* When shown, animate */
+    .msg.show{
+      display:block;
+      animation: popIn .65s cubic-bezier(.2,1.2,.2,1) both;
+    }
+
+    /* Soft glow behind message */
+    .glow{
+      position:absolute;
+      left:50%;
+      top:74%;
+      width:min(520px,85vw);
+      height:160px;
+      transform:translateX(-50%);
+      background: radial-gradient(circle at center, rgba(255,255,255,.85), rgba(255,255,255,0));
+      filter: blur(10px);
+      opacity:0;
+      pointer-events:none;
+    }
+    .glow.show{
+      opacity:1;
+      animation: glowIn .75s ease both;
+    }
+
+    @keyframes popIn{
+      0%   {opacity:0; transform: translateY(10px) scale(.92);}
+      55%  {opacity:1; transform: translateY(0) scale(1.05);}
+      100% {opacity:1; transform: translateY(0) scale(1);}
+    }
+    @keyframes glowIn{
+      0%   {opacity:0; transform:translateX(-50%) scale(.9);}
+      100% {opacity:1; transform:translateX(-50%) scale(1);}
     }
 
     /* Floating hearts */
@@ -87,32 +126,34 @@
       <button id="no">No 🙈</button>
     </div>
 
+    <div class="glow" id="glow"></div>
     <div class="msg" id="msg"></div>
   </div>
 
   <script>
-    const card  = document.getElementById("card");
-    const noBtn = document.getElementById("no");
-    const yesBtn= document.getElementById("yes");
-    const msg   = document.getElementById("msg");
-    const hearts= document.getElementById("hearts");
+    const card   = document.getElementById("card");
+    const noBtn  = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const msg    = document.getElementById("msg");
+    const glow   = document.getElementById("glow");
+    const hearts = document.getElementById("hearts");
 
     function dodgeNo(){
       const cardRect = card.getBoundingClientRect();
       const btnRect  = noBtn.getBoundingClientRect();
 
-      // Keep movement controlled (inside the card area)
+      // Controlled movement so it stays within the card area
       const maxX = Math.max(0, (cardRect.width / 2) - btnRect.width - 30);
       const maxY = 70;
 
-      const x = (Math.random() * (maxX * 2)) - maxX; // -maxX to +maxX
-      const y = (Math.random() * (maxY * 2)) - maxY; // -maxY to +maxY
+      const x = (Math.random() * (maxX * 2)) - maxX;
+      const y = (Math.random() * (maxY * 2)) - maxY;
 
       noBtn.style.left = x + "px";
       noBtn.style.top  = y + "px";
     }
 
-    // Only runs away when mouse tries to touch it (desktop)
+    // Desktop: runs away only when you try to hover it
     noBtn.addEventListener("mouseenter", dodgeNo);
 
     // Mobile: runs away on tap
@@ -121,17 +162,17 @@
       dodgeNo();
     }, { passive:false });
 
-    // If clicked somehow, still runs
+    // If clicked somehow, still dodge
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
       dodgeNo();
     });
 
     function popHearts(){
-      for(let i=0;i<22;i++){
+      for(let i=0;i<24;i++){
         const el = document.createElement("div");
         el.className = "heart";
-        el.textContent = ["💖","💘","💞","💕","❤️","🌷","✨"][Math.floor(Math.random()*7)];
+        el.textContent = ["💖","💘","💞","💕","❤️","🌷","✨","💐"][Math.floor(Math.random()*8)];
         el.style.left = Math.random()*100 + "vw";
         el.style.animationDuration = (2 + Math.random()*2.8) + "s";
         el.style.fontSize = (16 + Math.random()*20) + "px";
@@ -141,9 +182,9 @@
     }
 
     yesBtn.addEventListener("click", () => {
-      // Your message (with line breaks)
+      // Message content
       msg.innerHTML = `
-        <div style="font-size:18px; font-weight:700; margin-bottom:6px;">
+        <div style="font-size:18px; font-weight:800; margin-bottom:6px;">
           Yayyy 🥰💞
         </div>
         <div>
@@ -156,11 +197,21 @@
           🌸💐✨
         </div>
       `;
-      msg.style.display = "block";
 
-      // lock it in
+      // Show with animation (re-trigger friendly)
+      msg.classList.remove("show");
+      glow.classList.remove("show");
+
+      // Force reflow so animation restarts cleanly
+      void msg.offsetWidth;
+
+      msg.classList.add("show");
+      glow.classList.add("show");
+
+      // Lock choices
       noBtn.style.display = "none";
       yesBtn.textContent = "Forever Yes 💚";
+
       popHearts();
     });
   </script>
