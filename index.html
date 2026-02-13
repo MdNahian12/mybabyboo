@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Valentine 💘</title>
+  <title>My Babyboo 💘</title>
   <style>
     :root{
       --bg1:#ffdde1; --bg2:#ee9ca7; --card:#ffffffcc; --txt:#1f1f1f;
@@ -16,43 +16,55 @@
       overflow:hidden;
     }
     .card{
-      width:min(520px,92vw);
+      width:min(640px,92vw);
       background:var(--card);
       backdrop-filter: blur(8px);
-      border-radius:24px;
-      padding:28px 22px;
+      border-radius:26px;
+      padding:32px 22px 34px;
       box-shadow: 0 18px 50px rgba(0,0,0,.18);
       text-align:center;
       position:relative;
     }
-    h1{margin:0 0 10px; font-size:26px; color:var(--txt)}
+    h1{margin:0 0 10px; font-size:30px; color:var(--txt)}
     p{margin:0 0 18px; color:#333; opacity:.9}
-    .btns{display:flex; gap:12px; justify-content:center; margin-top:10px}
+
+    /* Buttons side-by-side */
+    .btnRow{
+      display:flex;
+      gap:14px;
+      justify-content:center;
+      align-items:center;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
     button{
       border:0; border-radius:999px;
-      padding:12px 20px; font-size:16px; cursor:pointer;
+      padding:12px 22px; font-size:16px; cursor:pointer;
       transition: transform .08s ease;
+      user-select:none;
+      min-width:140px;
     }
     button:active{transform:scale(.98)}
     #yes{background:#16a34a; color:white}
     #no{
       background:#ef4444; color:white;
-      position:absolute; /* so it can run away */
-      left:50%; top:72%;
-      transform: translate(-50%,-50%);
+      position:relative; /* stays in row but can “dodge” */
+      left:0; top:0;
     }
+
     .msg{
       display:none;
-      margin-top:18px;
-      padding:14px 14px;
+      margin-top:20px;
+      padding:18px 16px;
       background:white;
-      border-radius:16px;
-      border: 1px solid rgba(0,0,0,.08);
+      border-radius:18px;
+      border: 1px solid rgba(0,0,0,.10);
       font-size:16px;
+      line-height:1.45;
     }
-    .hearts{
-      position:fixed; inset:0; pointer-events:none; overflow:hidden;
-    }
+
+    /* Floating hearts */
+    .hearts{ position:fixed; inset:0; pointer-events:none; overflow:hidden; }
     .heart{
       position:absolute; bottom:-30px;
       font-size:18px; opacity:.85;
@@ -70,80 +82,87 @@
     <h1>Will you be my Valentine, my babyboo? 💘</h1>
     <p>Choose wisely 😌</p>
 
-    <div class="btns">
-      <button id="yes">Yes 😍</button>
+    <div class="btnRow">
+      <button id="yes">Yesss 💚</button>
+      <button id="no">No 🙈</button>
     </div>
 
-    <!-- "No" is positioned absolutely so it can move -->
-    <button id="no" aria-label="No">No 🙈</button>
-
-    <div class="msg" id="msg">
-      Yayyyy! 🥰💞 <br/>
-      I’m taking you on a cute date. 🌷✨
-    </div>
+    <div class="msg" id="msg"></div>
   </div>
 
   <script>
+    const card  = document.getElementById("card");
     const noBtn = document.getElementById("no");
-    const yesBtn = document.getElementById("yes");
-    const msg = document.getElementById("msg");
-    const card = document.getElementById("card");
-    const hearts = document.getElementById("hearts");
+    const yesBtn= document.getElementById("yes");
+    const msg   = document.getElementById("msg");
+    const hearts= document.getElementById("hearts");
 
-    function moveNoButton() {
-      const padding = 10;
+    function dodgeNo(){
       const cardRect = card.getBoundingClientRect();
-      const btnRect = noBtn.getBoundingClientRect();
+      const btnRect  = noBtn.getBoundingClientRect();
 
-      // Limit movement inside the card area (so it doesn't go off-screen)
-      const minX = padding;
-      const maxX = cardRect.width - btnRect.width - padding;
-      const minY = 90; // keep it below the title area
-      const maxY = cardRect.height - btnRect.height - padding;
+      // Keep movement controlled (inside the card area)
+      const maxX = Math.max(0, (cardRect.width / 2) - btnRect.width - 30);
+      const maxY = 70;
 
-      const x = Math.random() * (maxX - minX) + minX;
-      const y = Math.random() * (maxY - minY) + minY;
+      const x = (Math.random() * (maxX * 2)) - maxX; // -maxX to +maxX
+      const y = (Math.random() * (maxY * 2)) - maxY; // -maxY to +maxY
 
       noBtn.style.left = x + "px";
-      noBtn.style.top = y + "px";
-      noBtn.style.transform = "translate(0,0)";
+      noBtn.style.top  = y + "px";
     }
 
-    // Run away on hover (desktop) and on touch (mobile)
-    noBtn.addEventListener("mouseenter", moveNoButton);
+    // Only runs away when mouse tries to touch it (desktop)
+    noBtn.addEventListener("mouseenter", dodgeNo);
+
+    // Mobile: runs away on tap
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
-      moveNoButton();
+      dodgeNo();
     }, { passive:false });
 
-    // If she somehow clicks it, still move it
+    // If clicked somehow, still runs
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      moveNoButton();
+      dodgeNo();
     });
 
-    function popHearts() {
-      for (let i=0; i<18; i++){
+    function popHearts(){
+      for(let i=0;i<22;i++){
         const el = document.createElement("div");
         el.className = "heart";
-        el.textContent = ["💖","💘","💞","💕","❤️"][Math.floor(Math.random()*5)];
+        el.textContent = ["💖","💘","💞","💕","❤️","🌷","✨"][Math.floor(Math.random()*7)];
         el.style.left = Math.random()*100 + "vw";
-        el.style.animationDuration = (2 + Math.random()*2.5) + "s";
-        el.style.fontSize = (16 + Math.random()*18) + "px";
+        el.style.animationDuration = (2 + Math.random()*2.8) + "s";
+        el.style.fontSize = (16 + Math.random()*20) + "px";
         hearts.appendChild(el);
-        setTimeout(()=> el.remove(), 5000);
+        setTimeout(()=> el.remove(), 5200);
       }
     }
 
     yesBtn.addEventListener("click", () => {
+      // Your message (with line breaks)
+      msg.innerHTML = `
+        <div style="font-size:18px; font-weight:700; margin-bottom:6px;">
+          Yayyy 🥰💞
+        </div>
+        <div>
+          My love, I love you a lot. You are a blessing and lots of adooor to you. 🫶✨
+          <br><br>
+          Please allow me to take you on a cute date someday. 🌷🍓
+          <br><br>
+          Tight hugg and kisses my babyboo, my princess, my heart, my love. 💋👑❤️
+          <br><br>
+          🌸💐✨
+        </div>
+      `;
       msg.style.display = "block";
+
+      // lock it in
       noBtn.style.display = "none";
-      yesBtn.textContent = "Yesss 💚";
+      yesBtn.textContent = "Forever Yes 💚";
       popHearts();
     });
-
-    // Put No somewhere nice initially
-    moveNoButton();
   </script>
 </body>
 </html>
